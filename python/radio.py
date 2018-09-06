@@ -172,6 +172,10 @@ class modes_radio (gr.top_block, pubsub):
       if not self._u.set_center_freq(options.freq):
         print "Failed to set initial frequency"
 
+      # LimeSDR Mini insists we set sample rate before setting time
+      self._u.set_samp_rate(options.rate)
+      options.rate = int(self._u.get_samp_rate()) #retrieve actual
+
       #check for GPSDO
       #if you have a GPSDO, UHD will automatically set the timestamp to UTC time
       #as well as automatically set the clock to lock to GPSDO.
@@ -180,9 +184,6 @@ class modes_radio (gr.top_block, pubsub):
 
       if options.antenna is not None:
         self._u.set_antenna(options.antenna)
-
-      self._u.set_samp_rate(options.rate)
-      options.rate = int(self._u.get_samp_rate()) #retrieve actual
 
       if options.gain is None: #set to halfway
         g = self._u.get_gain_range()
