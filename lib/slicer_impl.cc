@@ -34,6 +34,7 @@
 #include <gr_air_modes/modes_crc.h>
 #include <iostream>
 #include <gnuradio/tags.h>
+#include <lib1090.h>
 
 extern "C"
 {
@@ -60,6 +61,9 @@ air_modes::slicer_impl::slicer_impl(gr::msg_queue::sptr queue) :
     d_queue = queue;
 
     set_output_multiple(d_check_width*2); //how do you specify buffer size for sinks?
+
+    lib1090Init(0.0f, 0.0f, 0.0f);
+    lib1090RunThread(NULL);
 }
 
 //this slicer is courtesy of Lincoln Labs. supposedly it is more resistant to mode A/C FRUIT.
@@ -137,8 +141,24 @@ int air_modes::slicer_impl::work(int noutput_items,
             slice_result_t slice_result = llslicer(in[i+j*2], in[i+j*2+1], rx_packet.reference_level);
             if(slice_result.decision) pkt_hdr += 1 << (4-j);
         }
-        if(pkt_hdr == 16 or pkt_hdr == 17 or pkt_hdr == 20 or pkt_hdr == 21) rx_packet.type = Long_Packet;
-        else rx_packet.type = Short_Packet;
+        //if(pkt_hdr == 16 or pkt_hdr == 17 or pkt_hdr == 20 or pkt_hdr == 21) rx_packet.type = Long_Packet;
+        //else rx_packet.type = Short_Packet;
+        switch (pkt_hdr) {
+            case 16:
+            case 17:
+            case 18:
+            case 19:
+            case 20:
+            case 21:
+                rx_packet.type = Long_Packet;
+                break;
+            case 4:
+            case 5:
+            case 11:
+            default:
+                rx_packet.type = Short_Packet;
+                break;
+        }
         int packet_length = (rx_packet.type == framer_packet_type(Short_Packet)) ? 56 : 112;
 
         //it's slice time!
@@ -183,6 +203,11 @@ int air_modes::slicer_impl::work(int noutput_items,
 
         pmt::pmt_t tstamp = tag_iter->value;
 
+        // try to decode beast message
+        struct modesMessage mm;
+        if (lib1090HandleFrame(&mm, rx_packet.data, pmt::to_uint64(tstamp)) == 0) {
+		// TODO want to use the corrected frame?
+        }
         d_payload.str("");
         for(int m = 0; m < packet_length/8; m++) {
             d_payload << std::hex << std::setw(2) << std::setfill('0') << unsigned(rx_packet.data[m]);
