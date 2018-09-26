@@ -62,7 +62,7 @@ class output_sbs1:
 
     #it could be cleaner if there were separate output_* fns
     #but this works
-    for i in (0, 4, 5, 11, 17):
+    for i in (0, 4, 5, 11, 17, 18, 19):
         pub.subscribe("type%i_dl" % i, self.output)
 
     #spawn thread to add new connections as they come in
@@ -144,7 +144,7 @@ class output_sbs1:
       outmsg = self.pp5(msg.data, msg.ecc)
     elif msgtype == 11:
       outmsg = self.pp11(msg.data, msg.ecc)
-    elif msgtype == 17:
+    elif msgtype == 17 or msgtype == 18 or msgtype == 19:
       outmsg = self.pp17(msg.data)
     else:
       raise NoHandlerError(msgtype)

@@ -26,11 +26,13 @@ class output_flightgear:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.connect((self.hostname, self.port))
         pub.subscribe("type17_dl", self.output)
+        pub.subscribe("type18_dl", self.output)
+        pub.subscribe("type19_dl", self.output)
 
     def output(self, msg):
         try:
             msgtype = msg.data["df"]
-            if msgtype == 17: #ADS-B report
+            if msgtype == 17 or msgtype == 18 or msgtype == 19: #ADS-B report
                 icao24 = msg.data["aa"]
                 bdsreg = msg.data["me"].get_type()
                 if bdsreg == 0x08: #ident packet

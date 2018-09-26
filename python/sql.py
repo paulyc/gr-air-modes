@@ -64,6 +64,8 @@ class output_sql:
     self._db.close()
     self._db = None
     publisher.subscribe("type17_dl", self.insert)
+    publisher.subscribe("type18_dl", self.insert)
+    publisher.subscribe("type19_dl", self.insert)
 
   def insert(self, message):
     with self._lock:
@@ -90,7 +92,7 @@ class output_sql:
     #this version ignores anything that isn't Type 17 for now, because we just don't care
     query = None
     msgtype = msg.data["df"]
-    if msgtype == 17:
+    if msgtype == 17 or msgtype == 18 or msgtype == 19:
       query = self.sql17(msg.data)
       #self["new_adsb"] = data["aa"] #publish change notification
 

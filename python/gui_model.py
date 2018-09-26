@@ -156,7 +156,7 @@ class dashboard_output:
                 newrow["icao"] = msg.ecc
                 self.model.addRecord(newrow)
             
-            elif msgtype == 17:
+            elif msgtype == 17 or msgtype == 18 or msgtype == 19:
                 icao = msg.data["aa"]
                 newrow["icao"] = icao
                 subtype = msg.data["ftc"]
