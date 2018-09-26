@@ -63,7 +63,7 @@ air_modes::slicer_impl::slicer_impl(gr::msg_queue::sptr queue) :
     set_output_multiple(d_check_width*2); //how do you specify buffer size for sinks?
 
     lib1090Init(0.0f, 0.0f, 0.0f);
-    lib1090RunThread(NULL);
+    //lib1090RunThread(NULL);
 }
 
 //this slicer is courtesy of Lincoln Labs. supposedly it is more resistant to mode A/C FRUIT.
