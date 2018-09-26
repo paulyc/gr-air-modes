@@ -205,7 +205,7 @@ int air_modes::slicer_impl::work(int noutput_items,
 
         // try to decode beast message
         struct modesMessage mm;
-        if (lib1090HandleFrame(&mm, rx_packet.data, pmt::to_uint64(tstamp)) == 0) {
+        if (lib1090HandleFrame(&mm, rx_packet.data, pmt::to_uint64(pmt::tuple_ref(tstamp,0)) == 0) {
 		// TODO want to use the corrected frame?
         }
         d_payload.str("");
