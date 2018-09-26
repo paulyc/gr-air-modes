@@ -119,7 +119,7 @@ class bds09_reply(data_field):
   def get_numbits(self):
     return 51
 
-#type 17 extended squitter data
+#type 17,18,19 extended squitter data
 class me_reply(data_field):
   #types in this format are listed by BDS register
   #TODO: add comments explaining these fields
@@ -217,6 +217,8 @@ class modes_reply(data_field):
            11: {"df": (1,5), "ca": (6,3), "aa": (9,24), "pi": (33,24)},
            16: {"df": (1,5), "vs": (6,1), "sl": (9,3), "ri": (14,4), "ac": (20,13), "mv": (33,56), "ap": (88,24)},
            17: {"df": (1,5), "ca": (6,3), "aa": (9,24), "me": (33,56, me_reply), "pi": (88,24)},
+           18: {"df": (1,5), "ca": (6,3), "aa": (9,24), "me": (33,56, me_reply), "pi": (88,24)},
+           19: {"df": (1,5), "ca": (6,3), "aa": (9,24), "me": (33,56, me_reply), "pi": (88,24)},
            20: {"df": (1,5), "fs": (6,3), "dr": (9,5), "um": (14,6), "ac": (20,13), "mb": (33,56, mb_reply), "ap": (88,24)},
            21: {"df": (1,5), "fs": (6,3), "dr": (9,5), "um": (14,6), "id": (20,13), "mb": (33,56, mb_reply), "ap": (88,24)},
            24: {"df": (1,5), "ke": (6,1), "nd": (7,4), "md": (11,80), "ap": (88,24)}

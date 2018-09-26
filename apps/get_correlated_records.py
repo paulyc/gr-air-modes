@@ -18,7 +18,7 @@ bk_station = [37.854246, -122.266701, 100]
 raw_stamps = []
 
 #first iterate through both files to find the estimated time difference. doesn't have to be accurate to more than 1ms or so.
-#to do this, look for type 17 position packets with the same data. assume they're unique. print the tdiff.
+#to do this, look for type 17,18,19 position packets with the same data. assume they're unique. print the tdiff.
 
 #collect a list of raw timestamps for each aircraft from each station
 #the raw stamps have to be processed into corrected stamps OR distance has to be included in each
@@ -68,7 +68,8 @@ for station0_report in records[0]: #iterate over list of reports from station 0
 #print all_heard
 
 #ok, now let's pull out the location-bearing packets so we can find our time offset
-position_reports = [x for x in all_heard if x["data"]["msgtype"] == 17 and 9 <= (x["data"]["longdata"] >> 51) & 0x1F <= 18]
+msgtype = x["data"]["msgtype"]
+position_reports = [x for x in all_heard if msgtype == 17 or msgtype == 18 or msgtype == 19 and 9 <= (x["data"]["longdata"] >> 51) & 0x1F <= 18]
 offset_list = []
 #there's probably a way to list-comprehension-ify this but it looks hard
 for msg in position_reports:

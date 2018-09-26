@@ -128,7 +128,14 @@ class output_print:
     self._print(retstr)
 
   #the only one which requires state
-  def handle17(self, msg):
+  #17,18,and 19 are all the same!
+  def handle18(self, msg):
+    return self.handle17(msg, 18)
+
+  def handle19(self, msg):
+    return self.handle17(msg, 19)
+
+  def handle17(self, msg, t=17):
     icao24 = msg.data["aa"]
     bdsreg = msg.data["me"].get_type()
 
@@ -136,17 +143,17 @@ class output_print:
     try:
         if bdsreg == 0x08:
           (ident, typestring) = air_modes.parseBDS08(msg.data)
-          retstr += "Type 17 BDS0,8 (ident) from %x type %s ident %s" % (icao24, typestring, ident)
+          retstr += "Type %d BDS0,8 (ident) from %x type %s ident %s" % (t, icao24, typestring, ident)
 
         elif bdsreg == 0x06:
           [ground_track, decoded_lat, decoded_lon, rnge, bearing] = air_modes.parseBDS06(msg.data, self._cpr)
-          retstr += "Type 17 BDS0,6 (surface report) from %x at (%.6f, %.6f) ground track %i" % (icao24, decoded_lat, decoded_lon, ground_track)
+          retstr += "Type %d BDS0,6 (surface report) from %x at (%.6f, %.6f) ground track %i" % (t, icao24, decoded_lat, decoded_lon, ground_track)
           if rnge is not None and bearing is not None:
             retstr += " (%.2f @ %.0f)" % (rnge, bearing)
 
         elif bdsreg == 0x05:
           [altitude, decoded_lat, decoded_lon, rnge, bearing] = air_modes.parseBDS05(msg.data, self._cpr)
-          retstr += "Type 17 BDS0,5 (position report) from %x at (%.6f, %.6f)" % (icao24, decoded_lat, decoded_lon)
+          retstr += "Type %d BDS0,5 (position report) from %x at (%.6f, %.6f)" % (t, icao24, decoded_lat, decoded_lon)
           if rnge is not None and bearing is not None:
             retstr += " (" + "%.2f" % rnge + " @ " + "%.0f" % bearing + ")"
           retstr += " at " + str(altitude) + "ft"
@@ -155,25 +162,25 @@ class output_print:
           subtype = msg.data["bds09"].get_type()
           if subtype == 0:
             [velocity, heading, vert_spd, turnrate] = air_modes.parseBDS09_0(msg.data)
-            retstr += "Type 17 BDS0,9-%i (track report) from %x with velocity %.0fkt heading %.0f VS %.0f turn rate %.0f" \
-                     % (subtype, icao24, velocity, heading, vert_spd, turnrate)
+            retstr += "Type %d BDS0,9-%i (track report) from %x with velocity %.0fkt heading %.0f VS %.0f turn rate %.0f" \
+                     % (t, subtype, icao24, velocity, heading, vert_spd, turnrate)
           elif subtype == 1:
             [velocity, heading, vert_spd] = air_modes.parseBDS09_1(msg.data)
-            retstr += "Type 17 BDS0,9-%i (track report) from %x with velocity %.0fkt heading %.0f VS %.0f" % (subtype, icao24, velocity, heading, vert_spd)
+            retstr += "Type %d BDS0,9-%i (track report) from %x with velocity %.0fkt heading %.0f VS %.0f" % (t, subtype, icao24, velocity, heading, vert_spd)
           elif subtype == 3:
             [mag_hdg, vel_src, vel, vert_spd, geo_diff] = air_modes.parseBDS09_3(msg.data)
-            retstr += "Type 17 BDS0,9-%i (air course report) from %x with %s %.0fkt magnetic heading %.0f VS %.0f geo. diff. from baro. alt. %.0fft" \
-                     % (subtype, icao24, vel_src, vel, mag_hdg, vert_spd, geo_diff)
+            retstr += "Type %d BDS0,9-%i (air course report) from %x with %s %.0fkt magnetic heading %.0f VS %.0f geo. diff. from baro. alt. %.0fft" \
+                     % (t, subtype, icao24, vel_src, vel, mag_hdg, vert_spd, geo_diff)
 
           else:
-            retstr += "Type 17 BDS0,9-%i from %x not implemented" % (subtype, icao24)
+            retstr += "Type %d BDS0,9-%i from %x not implemented" % (t, subtype, icao24)
 
         elif bdsreg == 0x62:
           emerg_str = air_modes.parseBDS62(data)
-          retstr += "Type 17 BDS6,2 (emergency) from %x type %s" % (icao24, emerg_str)
+          retstr += "Type %d BDS6,2 (emergency) from %x type %s" % (t, icao24, emerg_str)
 
         else:
-          retstr += "Type 17 with FTC=%i from %x not implemented" % (msg.data["ftc"], icao24)
+          retstr += "Type %d with FTC=%i from %x not implemented" % (t, msg.data["ftc"], icao24)
     except ADSBError:
         return
 

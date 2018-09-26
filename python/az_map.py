@@ -184,6 +184,8 @@ class az_map_output:
         self._cpr = cprdec
         self.model = model
         pub.subscribe("type17_dl", self.output)
+        pub.subscribe("type18_dl", self.output)
+        pub.subscribe("type19_dl", self.output)
 
     def output(self, msg):
         try:
