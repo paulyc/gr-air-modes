@@ -38,7 +38,7 @@ class AIR_MODES_API slicer : virtual public gr::sync_block
 {
 public:
     typedef boost::shared_ptr<slicer> sptr;
-    static sptr make(gr::msg_queue::sptr queue);
+    static sptr make(gr::msg_queue::sptr queue, int channel_rate);
 };
 
 } //namespace air_modes
