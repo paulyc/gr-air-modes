@@ -43,7 +43,7 @@ private:
     std::ostringstream d_payload;
 
 public:
-    slicer_impl(gr::msg_queue::sptr queue);
+    slicer_impl(gr::msg_queue::sptr queue, int channel_rate);
 
     int work (int noutput_items,
               gr_vector_const_void_star &input_items,

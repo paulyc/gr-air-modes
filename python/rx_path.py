@@ -57,7 +57,7 @@ class rx_path(gr.hier_block2):
         self._sync = air_modes_swig.preamble(self._rate, self._threshold)
 
         # Slice Mode-S bits and send to message queue
-        self._slicer = air_modes_swig.slicer(self._queue)
+        self._slicer = air_modes_swig.slicer(self._queue, self._rate)
 
         # Wire up the flowgraph
         self.connect(self._bb, (self._sync, 0))

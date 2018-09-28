@@ -44,18 +44,18 @@ extern "C"
 
 namespace gr {
 
-air_modes::slicer::sptr air_modes::slicer::make(gr::msg_queue::sptr queue) {
-    return gnuradio::get_initial_sptr(new air_modes::slicer_impl(queue));
+air_modes::slicer::sptr air_modes::slicer::make(gr::msg_queue::sptr queue, int channel_rate) {
+    return gnuradio::get_initial_sptr(new air_modes::slicer_impl(queue, channel_rate));
 }
 
-air_modes::slicer_impl::slicer_impl(gr::msg_queue::sptr queue) :
+air_modes::slicer_impl::slicer_impl(gr::msg_queue::sptr queue, int channel_rate) :
   gr::sync_block ("slicer",
                   gr::io_signature::make (1, 1, sizeof(float)),
                   gr::io_signature::make (0, 0, 0) )
 {
     //initialize private data here
     d_chip_rate = 2000000; //2Mchips per second
-    d_samples_per_chip = 2;//FIXME this is constant now channel_rate / d_chip_rate;
+    d_samples_per_chip = channel_rate / d_chip_rate;//FIXED? this is constant now channel_rate / d_chip_rate;
     d_samples_per_symbol = d_samples_per_chip * 2;
     d_check_width = 120 * d_samples_per_symbol; //how far you will have to look ahead
     d_queue = queue;
@@ -63,7 +63,13 @@ air_modes::slicer_impl::slicer_impl(gr::msg_queue::sptr queue) :
     set_output_multiple(d_check_width*2); //how do you specify buffer size for sinks?
 
     lib1090Init(0.0f, 0.0f, 0.0f);
-    //lib1090RunThread(NULL);
+    struct modes_t *modesOut;
+    struct lib1090Config_t *lib1090ConfigOut;
+    lib1090GetModes(&modesOut, &lib1090ConfigOut);
+//FIXME this is going to do nothing because Init will overwrite
+//    modesOut->sample_rate = channel_rate;
+    //lib1090ConfigOut->
+    lib1090RunThread(NULL);
 }
 
 //this slicer is courtesy of Lincoln Labs. supposedly it is more resistant to mode A/C FRUIT.
@@ -179,11 +185,33 @@ int air_modes::slicer_impl::work(int noutput_items,
         }
 
         //here you might want to traverse the whole packet and if you find all 0's, just toss it. don't know why these packets turn up, but they pass ECC.
-        bool zeroes = 1;
+        bool zeroes = true;
         for(int m = 0; m < 14; m++) {
-            if(rx_packet.data[m]) zeroes = 0;
+            if(rx_packet.data[m]) {
+                zeroes = false;
+                break;
+            }
         }
         if(zeroes) {continue;} //toss it
+
+        // try to decode beast message
+        struct modesMessage mm;
+        int errs = lib1090FixupFrame(rx_packet.data, rx_packet.fixupData);
+        if (errs >= 0) {
+            memcpy(rx_packet.data, rx_packet.fixupData, sizeof(rx_packet.data));
+        }
+        ssize_t res = lib1090DecodeFrame(&mm, rx_packet.data, rx_packet.timestamp, rx_packet.reference_level);
+        if (res == -2) {
+            continue;
+        }
+        uint8_t beastBuffer[MAX_BEAST_MSG_LEN];
+        res = lib1090FormatBeast(&mm, beastBuffer, sizeof(beastBuffer), true);
+        if (res < 0) {
+            // some errno
+        }
+
+        // just ignore this
+        rx_packet.numlowconf = 0;
 
         rx_packet.message_type = (rx_packet.data[0] >> 3) & 0x1F; //get the message type to make decisions on ECC methods
 
@@ -199,15 +227,10 @@ int air_modes::slicer_impl::work(int noutput_items,
         //crc for packets that aren't type 11 or type 17 is encoded with the transponder ID, which we don't know
         //therefore we toss 'em if there's syndrome
         //crc for the other short packets is usually nonzero, so they can't really be trusted that far
-        if(rx_packet.crc && (rx_packet.message_type == 11 || rx_packet.message_type == 17)) {continue;}
+        //if(rx_packet.crc && (rx_packet.message_type == 11 || rx_packet.message_type == 17)) {continue;}
 
         pmt::pmt_t tstamp = tag_iter->value;
 
-        // try to decode beast message
-        struct modesMessage mm;
-        if (lib1090HandleFrame(&mm, rx_packet.data, pmt::to_uint64(pmt::tuple_ref(tstamp,0)) == 0) {
-		// TODO want to use the corrected frame?
-        }
         d_payload.str("");
         for(int m = 0; m < packet_length/8; m++) {
             d_payload << std::hex << std::setw(2) << std::setfill('0') << unsigned(rx_packet.data[m]);

@@ -28,6 +28,7 @@ typedef enum { No_Error = 0, Solution_Found, Too_Many_LCBs, No_Solution, Multipl
 
 struct modes_packet {
 	unsigned char data[14];
+    unsigned char fixupData[14];
 //	unsigned char confidence[14]; //112 bits of boolean high/low confidence data for each bit
 	unsigned char lowconfbits[24]; //positions of low confidence bits within the packet
 
