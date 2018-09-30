@@ -25,5 +25,7 @@ install(FILES
     slicer.h
     types.h
     api.h
+    dump1090_proc.h
+    lib1090_beast.h
     DESTINATION include/gr_air_modes
 )
