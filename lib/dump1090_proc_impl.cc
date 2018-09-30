@@ -32,6 +32,10 @@
 #include <iostream>
 #include <gnuradio/tags.h>
 
+#ifndef DUMP1090_ENABLED
+#define DUMP1090_ENABLED 1
+#endif
+
 namespace gr {
 
 air_modes::dump1090_proc::sptr air_modes::dump1090_proc::make(float channel_rate) {
@@ -61,14 +65,18 @@ float air_modes::dump1090_proc_impl::get_rate(void) {
 }
 
 bool air_modes::dump1090_proc_impl::start() {
+#if DUMP1090_ENABLED
     if (lib1090RunDump1090Fork(_fork_info) != 0) {
         return false;
     }
+#endif
     return true;
 }
 
 bool air_modes::dump1090_proc_impl::stop() {
+#if DUMP1090_ENABLED
     lib1090KillDump1090Fork(_fork_info);
+#endif
     return true;
 }
 
@@ -80,12 +88,14 @@ int air_modes::dump1090_proc_impl::work(int noutput_items,
     gr_complex *out = (gr_complex *) output_items[0];
     memcpy(out, in, noutput_items * sizeof(gr_complex));
     const size_t bytes = sizeof(gr_complex) * noutput_items;
+#if DUMP1090_ENABLED
     ssize_t written = write(_fork_info->pipedes[0], in, bytes);
     if (written == -1) {
         fprintf(stderr, "write() returned error in dump1090_proc_impl::work : %d [%s]\n", errno, strerror(errno));
     } else if (written != bytes) {
         fprintf(stderr, "write() tried to write %zu bytes to pipe but only wrote %zs\n", bytes, written);
     }
+#endif
 
     return WORK_DONE;
 }
