@@ -62,13 +62,12 @@ air_modes::slicer_impl::slicer_impl(gr::msg_queue::sptr queue, int channel_rate)
 
     set_output_multiple(d_check_width*2); //how do you specify buffer size for sinks?
 
-    lib1090Init(0.0f, 0.0f, 0.0f);
-    struct modes_t *modesOut;
-    struct lib1090Config_t *lib1090ConfigOut;
-    lib1090GetModes(&modesOut, &lib1090ConfigOut);
-//FIXME this is going to do nothing because Init will overwrite
-//    modesOut->sample_rate = channel_rate;
-    //lib1090ConfigOut->
+    struct modes_t *modes;
+    struct lib1090Config_t *lib1090Config;
+    lib1090GetConfig(&lib1090Config);
+    lib1090Config->sample_rate = channel_rate;
+    lib1090GetModes(&modes);
+    modes->sample_rate = channel_rate;
     lib1090RunThread(NULL);
 }
 
