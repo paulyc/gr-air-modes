@@ -65,6 +65,7 @@ float air_modes::dump1090_proc_impl::get_rate(void) {
 }
 
 bool air_modes::dump1090_proc_impl::start() {
+    printf("start\n");
 #if DUMP1090_ENABLED
     if (lib1090RunDump1090Fork(_fork_info) != 0) {
         return false;
@@ -80,6 +81,10 @@ bool air_modes::dump1090_proc_impl::stop() {
     return true;
 }
 
+//TODO just change all this to use the complex_to_interleaved_short gnuradio block
+static int16_t *complexConvertBuffer = NULL;
+static size_t complexConvertBufferSize = 0;
+
 int air_modes::dump1090_proc_impl::work(int noutput_items,
                           gr_vector_const_void_star &input_items,
                           gr_vector_void_star &output_items)
@@ -87,13 +92,21 @@ int air_modes::dump1090_proc_impl::work(int noutput_items,
     const gr_complex *in = (const gr_complex *) input_items[0];
     gr_complex *out = (gr_complex *) output_items[0];
     memcpy(out, in, noutput_items * sizeof(gr_complex));
-    const size_t bytes = sizeof(gr_complex) * noutput_items;
 #if DUMP1090_ENABLED
-    ssize_t written = write(_fork_info->pipedes[0], in, bytes);
+    const size_t bytes = 2 * sizeof(int16_t) * noutput_items;
+    if (bytes > complexConvertBufferSize) {
+        complexConvertBufferSize = bytes;
+        complexConvertBuffer = (int16_t*)realloc(complexConvertBuffer, bytes);
+    }
+    for (int i = 0; i < noutput_items; ++i) {
+        complexConvertBuffer[i*2] = (int16_t)lrintf(in[i].real());
+        complexConvertBuffer[i*2+1] = (int16_t)lrintf(in[i].imag());
+    }
+    ssize_t written = write(_fork_info->pipedes[0], complexConvertBuffer, bytes);
     if (written == -1) {
         fprintf(stderr, "write() returned error in dump1090_proc_impl::work : %d [%s]\n", errno, strerror(errno));
     } else if (written != bytes) {
-        fprintf(stderr, "write() tried to write %zu bytes to pipe but only wrote %zs\n", bytes, written);
+        fprintf(stderr, "write() tried to write %zu bytes to pipe but only wrote %zd\n", bytes, written);
     }
 #endif
 
