@@ -164,7 +164,9 @@ class modes_radio (gr.top_block, pubsub):
     if options.source == "uhd":
       #UHD source by default
       from gnuradio import uhd
-      self._u = uhd.single_usrp_source(options.args, uhd.io_type_t.COMPLEX_FLOAT32, 1)
+      sa = uhd.stream_args("fc32", "sc16")
+      self._u = uhd.single_usrp_source(options.args, sa)
+#      self._u = uhd.single_usrp_source(options.args, uhd.io_type_t.COMPLEX_FLOAT32, 1)
 
       if(options.subdev):
         self._u.set_subdev_spec(options.subdev, 0)
