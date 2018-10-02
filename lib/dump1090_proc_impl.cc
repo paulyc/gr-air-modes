@@ -66,15 +66,11 @@ float air_modes::dump1090_proc_impl::get_rate(void) {
 
 bool air_modes::dump1090_proc_impl::start() {
     printf("start\n");
-#if DUMP1090_ENABLED
-    if (lib1090RunDump1090Fork(_fork_info) != 0) {
-        return false;
-    }
-#endif
     return true;
 }
 
 bool air_modes::dump1090_proc_impl::stop() {
+    printf("stop\n");
 #if DUMP1090_ENABLED
     lib1090KillDump1090Fork(_fork_info);
 #endif
@@ -89,6 +85,9 @@ int air_modes::dump1090_proc_impl::work(int noutput_items,
                           gr_vector_const_void_star &input_items,
                           gr_vector_void_star &output_items)
 {
+#if DUMP1090_ENABLED
+    lib1090RunDump1090Fork(_fork_info);// no op if not started
+#endif
     const gr_complex *in = (const gr_complex *) input_items[0];
     gr_complex *out = (gr_complex *) output_items[0];
     memcpy(out, in, noutput_items * sizeof(gr_complex));
@@ -99,8 +98,8 @@ int air_modes::dump1090_proc_impl::work(int noutput_items,
         complexConvertBuffer = (int16_t*)realloc(complexConvertBuffer, bytes);
     }
     for (int i = 0; i < noutput_items; ++i) {
-        complexConvertBuffer[i*2] = (int16_t)lrintf(in[i].real());
-        complexConvertBuffer[i*2+1] = (int16_t)lrintf(in[i].imag());
+        complexConvertBuffer[i*2] = (int16_t)lrintf(in[i].real()*SHRT_MAX);
+        complexConvertBuffer[i*2+1] = (int16_t)lrintf(in[i].imag()*SHRT_MAX);
     }
     ssize_t written = write(_fork_info->pipedes[0], complexConvertBuffer, bytes);
     if (written == -1) {
