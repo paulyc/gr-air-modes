@@ -61,7 +61,7 @@ air_modes::slicer_impl::slicer_impl(gr::msg_queue::sptr queue, int channel_rate)
     d_queue = queue;
 
     set_output_multiple(d_check_width*2); //how do you specify buffer size for sinks?
-
+#if 0
     struct modes_t *modes;
     struct lib1090Config_t *lib1090Config;
     lib1090GetConfig(&lib1090Config);
@@ -69,6 +69,7 @@ air_modes::slicer_impl::slicer_impl(gr::msg_queue::sptr queue, int channel_rate)
     lib1090GetModes(&modes);
     modes->sample_rate = channel_rate;
     lib1090RunThread(NULL);
+#endif
 }
 
 //this slicer is courtesy of Lincoln Labs. supposedly it is more resistant to mode A/C FRUIT.
@@ -192,7 +193,7 @@ int air_modes::slicer_impl::work(int noutput_items,
             }
         }
         if(zeroes) {continue;} //toss it
-
+#if 0
         // try to decode beast message
         struct modesMessage mm;
         int errs = lib1090FixupFrame(rx_packet.data, rx_packet.fixupData);
@@ -211,7 +212,7 @@ int air_modes::slicer_impl::work(int noutput_items,
 
         // just ignore this
         rx_packet.numlowconf = 0;
-
+#endif
         rx_packet.message_type = (rx_packet.data[0] >> 3) & 0x1F; //get the message type to make decisions on ECC methods
 
         if(rx_packet.type == Short_Packet && rx_packet.message_type != 11 && rx_packet.numlowconf > 0) {continue;}

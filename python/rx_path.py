@@ -21,6 +21,7 @@
 
 from gnuradio import gr, blocks, filter
 import air_modes_swig
+import numpy
 
 class rx_path(gr.hier_block2):
 
@@ -34,14 +35,19 @@ class rx_path(gr.hier_block2):
         self._queue = queue
         self._spc = int(rate/2e6)
         self._dump1090_proc = air_modes_swig.dump1090_proc(rate)
+        self._demod2 = blocks.complex_to_interleaved_short()
+
+        self._mul = blocks.multiply_const_cc(numpy.complex64(32768+0j), 1)
+        #blocks.streams_to_stream
+        self.connect(self, self._mul, self._demod2, self._dump1090_proc)
 
         # Convert incoming I/Q baseband to amplitude
         self._demod = blocks.complex_to_mag_squared()
         if use_dcblock:
             self._dcblock = filter.dc_blocker_cc(100*self._spc,False)
-            self.connect(self, self._dump1090_proc, self._dcblock, self._demod)
+            self.connect(self, self._dcblock, self._demod)
         else:
-            self.connect(self, self._dump1090_proc, self._demod)
+            self.connect(self, self._demod)
             self._dcblock = None
 
         self._bb = self._demod
@@ -73,7 +79,7 @@ class rx_path(gr.hier_block2):
             self._pmf.set_length_and_scale(self._spc, 1.0/self._spc)
 #        if self._dcblock is not None:
 #            self._dcblock.set_length(100*self._spc)
-        self._dump1090_proc.set_rate(rate)
+#self._dump1090_proc.set_rate(rate)
 
     def set_threshold(self, threshold):
         self._sync.set_threshold(threshold)

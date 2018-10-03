@@ -44,11 +44,11 @@ air_modes::dump1090_proc::sptr air_modes::dump1090_proc::make(float channel_rate
 
 air_modes::dump1090_proc_impl::dump1090_proc_impl(float channel_rate) :
         gr::sync_block ("dump1090_proc",
-           gr::io_signature::make (1, 1, sizeof(gr_complex)), //raw I/Q samples straight thru
-           gr::io_signature::make (1, 1, sizeof(gr_complex)))
+           gr::io_signature::make (1, 1, sizeof(int16_t)),
+           gr::io_signature::make (0, 0, 0))
 {
     lib1090InitDump1090Fork(&_fork_info);
-    set_rate(channel_rate);
+    set_rate(channel_rate); // ????
 }
 
 air_modes::dump1090_proc_impl::~dump1090_proc_impl() {
@@ -77,31 +77,22 @@ bool air_modes::dump1090_proc_impl::stop() {
     return true;
 }
 
-//TODO just change all this to use the complex_to_interleaved_short gnuradio block
-static int16_t *complexConvertBuffer = NULL;
-static size_t complexConvertBufferSize = 0;
-
 int air_modes::dump1090_proc_impl::work(int noutput_items,
                           gr_vector_const_void_star &input_items,
                           gr_vector_void_star &output_items)
 {
 #if DUMP1090_ENABLED
-    lib1090RunDump1090Fork(_fork_info);// no op if not started
+    int res = lib1090RunDump1090Fork(_fork_info);// no op if not started
+    if (res == -1) { // already started
+
+    }
 #endif
-    const gr_complex *in = (const gr_complex *) input_items[0];
-    gr_complex *out = (gr_complex *) output_items[0];
-    memcpy(out, in, noutput_items * sizeof(gr_complex));
+    const int16_t *in = (const int16_t *) input_items[0];
+    //gr_complex *out = (gr_complex *) output_items[0];
+    //memcpy(out, in, noutput_items * sizeof(gr_complex));
 #if DUMP1090_ENABLED
-    const size_t bytes = 2 * sizeof(int16_t) * noutput_items;
-    if (bytes > complexConvertBufferSize) {
-        complexConvertBufferSize = bytes;
-        complexConvertBuffer = (int16_t*)realloc(complexConvertBuffer, bytes);
-    }
-    for (int i = 0; i < noutput_items; ++i) {
-        complexConvertBuffer[i*2] = (int16_t)lrintf(in[i].real()*SHRT_MAX);
-        complexConvertBuffer[i*2+1] = (int16_t)lrintf(in[i].imag()*SHRT_MAX);
-    }
-    ssize_t written = write(_fork_info->pipedes[0], complexConvertBuffer, bytes);
+    const size_t bytes = sizeof(int16_t) * noutput_items;
+    ssize_t written = write(_fork_info->pipedes[1], in, bytes);
     if (written == -1) {
         fprintf(stderr, "write() returned error in dump1090_proc_impl::work : %d [%s]\n", errno, strerror(errno));
     } else if (written != bytes) {
@@ -109,7 +100,7 @@ int air_modes::dump1090_proc_impl::work(int noutput_items,
     }
 #endif
 
-    return WORK_DONE;
+    return noutput_items;
 }
 
 } //namespace gr
