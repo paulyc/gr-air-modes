@@ -275,7 +275,10 @@ def parseBDS08(data):
                 ["NO INFO", "GLIDER", "BALLOON/BLIMP", "PARACHUTE", "ULTRALIGHT", "RESERVED", "UAV", "SPACECRAFT"],\
                 ["NO INFO", "LIGHT", "SMALL", "LARGE", "LARGE HIGH VORTEX", "HEAVY", "HIGH PERFORMANCE", "ROTORCRAFT"]]
 
-  catstring = categories[data["ftc"]-1][data["cat"]]
+  try:
+    catstring = categories[data["ftc"]-1][data["cat"]]
+  except:
+    return ("", "NO INFO")
 
   msg = ""
   for i in range(0, 8):
