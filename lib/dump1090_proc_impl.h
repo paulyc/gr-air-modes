@@ -36,7 +36,16 @@ namespace air_modes {
 class AIR_MODES_API dump1090_proc_impl : public dump1090_proc
 {
 private:
+    typedef int16_t sc16_t[2];
+    constexpr static double shortMax = 32768.0;
+    constexpr static double inverseShortMax = 1.0 / shortMax;
+    constexpr static double extraGainDb = 24.0;
+    constexpr static double extraGainMul = 251.18864315095797; // pow(10.0, extraGainDb/10.0)
+    constexpr static double totalGain = shortMax * extraGainMul;
+
     struct dump1090Fork_t *_fork_info;
+    size_t _lib1090BufferSize;
+    sc16_t *_lib1090Buffer;
 
 public:
     dump1090_proc_impl(float channel_rate);

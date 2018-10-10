@@ -43,10 +43,11 @@ class output_print:
     return "(%i %.8f) " % (msg.rssi, msg.timestamp)
 
   def _print(self, msg):
-    if self._callback is None:
-        print msg
-    else:
-        self._callback(msg)
+    print '.',
+    #if self._callback is None:
+    #    print msg
+    #else:
+    #    self._callback(msg)
 
   def catch_nohandler(self, msg):
     if msg.data.get_type() not in self._fns:

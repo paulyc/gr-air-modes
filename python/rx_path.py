@@ -34,12 +34,14 @@ class rx_path(gr.hier_block2):
         self._threshold = threshold
         self._queue = queue
         self._spc = int(rate/2e6)
-        self._dump1090_proc = air_modes_swig.dump1090_proc(rate)
+        self._dump1090_proc = air_modes_swig.dump1090_proc(2.4e6)
+        self._rs2 = filter.mmse_resampler_cc(0.0, rate/2.4e6)
         self._demod2 = blocks.complex_to_interleaved_short()
 
-        self._mul = blocks.multiply_const_cc(numpy.complex64(32768+0j), 1)
+        #self._mul = blocks.multiply_const_cc(complex(65535, 0), 1)
         #blocks.streams_to_stream
-        self.connect(self, self._mul, self._demod2, self._dump1090_proc)
+        self.connect(self, self._rs2, self._dump1090_proc)
+        return
 
         # Convert incoming I/Q baseband to amplitude
         self._demod = blocks.complex_to_mag_squared()
